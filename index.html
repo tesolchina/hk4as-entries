@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kam Fan entries — browse and analysis</title>
+<style>
+  :root{
+    --bg:#f7f5f1; --panel:#fff; --ink:#1c1a17; --muted:#6b6558; --line:#e2ddd3;
+    --accent:#8a2b12; --accent-soft:#f3e7e2; --ok:#1d6b3a; --ok-soft:#e6f1e9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans TC",sans-serif}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:18px 22px}
+  h1{margin:0 0 4px;font-size:21px;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:13px}
+  .stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
+  .stat{font-size:12px;color:var(--muted)}
+  .stat b{display:block;font-size:17px;color:var(--ink);font-weight:600}
+  .filters{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+           padding:12px 22px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .f{display:flex;flex-direction:column;gap:4px}
+  .f label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  select,input[type=search]{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;
+          font:inherit;min-width:130px;color:inherit}
+  input[type=search]{min-width:220px}
+  .spacer{flex:1}
+  .count{font-size:12px;color:var(--muted);padding-bottom:8px}
+  main{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,420px);gap:0;align-items:start}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  .listwrap{min-width:0;border-right:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;background:var(--panel)}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  th{position:sticky;top:57px;background:#fbfaf7;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);z-index:3}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#fbf8f3}
+  tbody tr.sel{background:var(--accent-soft)}
+  .yr{color:var(--muted);white-space:nowrap}
+  .ttl{font-weight:500}
+  .pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap}
+  .pill.kam{background:var(--accent-soft);border-color:#e3c9c0;color:var(--accent)}
+  .pill.an{background:var(--ok-soft);border-color:#cfe3d5;color:var(--ok)}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#cfc9bd}
+  .dot.on{background:var(--ok)}
+  .pager{display:flex;gap:8px;align-items:center;padding:12px 22px;font-size:13px}
+  .pager button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font:inherit}
+  .pager button:disabled{opacity:.4;cursor:default}
+  .detail{position:sticky;top:57px;background:var(--panel);padding:18px 20px;min-height:60vh}
+  @media (max-width:900px){.detail{position:static;border-top:1px solid var(--line)}}
+  .detail h2{margin:6px 0 2px;font-size:19px}
+  .detail .meta{color:var(--muted);font-size:13px;margin-bottom:12px}
+  .detail h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px;border-top:1px solid var(--line);padding-top:12px}
+  dl{display:grid;grid-template-columns:92px 1fr;gap:6px 10px;margin:0;font-size:13px}
+  dt{color:var(--muted)}
+  dd{margin:0}
+  ul.an{margin:0;padding-left:16px;font-size:13px}
+  ul.an li{margin-bottom:6px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:11px;padding:2px 8px;border-radius:999px;background:#f1efe9;border:1px solid var(--line)}
+  .btn{display:inline-block;margin-top:10px;padding:7px 12px;border-radius:6px;background:var(--accent);color:#fff;
+       text-decoration:none;font-size:13px}
+  .btn.ghost{background:#fff;color:var(--accent);border:1px solid #e3c9c0}
+  .empty{color:var(--muted);font-size:14px;padding:6px 0}
+  .note{font-size:12px;color:var(--muted);margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kam Fan Awards — all entries, with analysis</h1>
+  <div class="sub">Hong Kong 4As Kam Fan archive, 1984–2025 · one row per award entry · analysis computed from the archive's own detail pages</div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="filters">
+  <div class="f"><label for="fYear">Year</label><select id="fYear"></select></div>
+  <div class="f"><label for="fGroup">Media</label><select id="fGroup"></select></div>
+  <div class="f"><label for="fMedal">Award</label><select id="fMedal"></select></div>
+  <div class="f"><label for="fStatus">Analysis</label>
+    <select id="fStatus">
+      <option value="">All entries</option>
+      <option value="an">Measured only</option>
+      <option value="film">Has a film</option>
+      <option value="board">Has a board</option>
+      <option value="noan">Not yet measured</option>
+    </select>
+  </div>
+  <div class="f"><label for="fQ">Search</label><input id="fQ" type="search" placeholder="title, brand, agency"></div>
+  <div class="spacer"></div>
+  <div class="count" id="count"></div>
+</div>
+
+<main>
+  <div class="listwrap">
+    <table>
+      <thead><tr><th style="width:52px">Year</th><th>Entry title</th><th style="width:150px">Media</th><th style="width:120px">Award</th><th style="width:28px" title="measured"></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="pager">
+      <button id="prev">← Prev</button>
+      <button id="next">Next →</button>
+      <span id="pageinfo"></span>
+    </div>
+  </div>
+  <aside class="detail" id="detail">
+    <div class="empty">Select an entry to see its analysis.</div>
+  </aside>
+</main>
+<footer style="padding:16px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:12px">
+  Kam Fan archive data © The Association of Accredited Advertising Agencies of Hong Kong (HK4As);
+  used here for research and teaching. Analysis and page: tesolchina/simongtd #341.
+  Entry boards open on the archive's own site.
+</footer>
+
+<script>
+const PAGE = 50;
+let DATA = [], VIEW = [], page = 0, selected = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function tier(m){
+  const x = (m||"").toLowerCase();
+  if (x.includes("kam fan")) return "Kam Fan / Grand";
+  for (const t of ["gold","silver","bronze","merit"]) if (x.includes(t)) return t[0].toUpperCase()+t.slice(1);
+  return (m||"Other").trim() || "Other";
+}
+
+fetch("entries.json").then(r=>r.json()).then(d=>{
+  DATA = d;
+  buildStats(); buildFilters(); apply();
+}).catch(e=>{
+  $("#detail").innerHTML = '<div class="empty">Could not load entries.json — '+esc(e.message)+'</div>';
+});
+
+function buildStats(){
+  const n = DATA.length;
+  const measured = DATA.filter(x=>x.analysed).length;
+  const films = DATA.filter(x=>x.film).length;
+  const boards = DATA.filter(x=>x.board).length;
+  $("#stats").innerHTML = [
+    [n.toLocaleString(), "entries"], [measured.toLocaleString(), "analysed (measured film)"],
+    [films.toLocaleString(), "carry a film"], [boards.toLocaleString(), "carry a board"]
+  ].map(([v,l])=>`<div class="stat"><b>${v}</b>${l}</div>`).join("");
+}
+
+function buildFilters(){
+  const years = [...new Set(DATA.map(x=>x.year).filter(Boolean))].sort((a,b)=>a-b);
+  $("#fYear").innerHTML = '<option value="">All years</option>' +
+    years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  const groups = [...new Set(DATA.map(x=>x.group))].sort();
+  $("#fGroup").innerHTML = '<option value="">All media</option>' +
+    groups.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join("");
+  const medals = ["Kam Fan / Grand","Gold","Silver","Bronze","Merit","Other"];
+  $("#fMedal").innerHTML = '<option value="">All awards</option>' +
+    medals.map(m=>`<option value="${m}">${m}</option>`).join("");
+}
+
+function apply(){
+  const y = $("#fYear").value, g = $("#fGroup").value, m = $("#fMedal").value,
+        st = $("#fStatus").value, q = $("#fQ").value.trim().toLowerCase();
+  VIEW = DATA.filter(x=>{
+    if (y && String(x.year) !== y) return false;
+    if (g && x.group !== g) return false;
+    if (m && tier(x.medal) !== m) return false;
+    if (st === "an" && !x.analysed) return false;
+    if (st === "noan" && x.analysed) return false;
+    if (st === "film" && !x.film) return false;
+    if (st === "board" && !x.board) return false;
+    if (q){
+      const hay = (x.title+" "+x.adv+" "+x.agency).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> (b.year||0)-(a.year||0) || a.id.localeCompare(b.id));
+  page = 0;
+  render();
+}
+
+function render(){
+  const start = page*PAGE;
+  const slice = VIEW.slice(start, start+PAGE);
+  $("#rows").innerHTML = slice.map(x=>`
+    <tr data-id="${x.id}" class="${selected===x.id?'sel':''}">
+      <td class="yr">${x.year||""}</td>
+      <td class="ttl">${esc(x.title||"(untitled)")}</td>
+      <td><span class="pill">${esc((x.media||"—").slice(0,26))}</span></td>
+      <td>${x.medal?`<span class="pill ${tier(x.medal)==='Kam Fan / Grand'?'kam':''}">${esc(tier(x.medal))}</span>`:""}</td>
+      <td><span class="dot ${x.analysed?'on':''}" title="${x.analysed?'measured':'not yet measured'}"></span></td>
+    </tr>`).join("");
+  document.querySelectorAll("#rows tr").forEach(tr=>tr.onclick=()=>{ selected=tr.dataset.id; render(); show(tr.dataset.id); });
+  $("#count").textContent = `${VIEW.length.toLocaleString()} entries match`;
+  const pages = Math.max(1, Math.ceil(VIEW.length/PAGE));
+  $("#pageinfo").textContent = `page ${page+1} / ${pages}`;
+  $("#prev").disabled = page===0;
+  $("#next").disabled = page>=pages-1;
+}
+
+$("#prev").onclick = ()=>{ if(page>0){page--;render();} };
+$("#next").onclick = ()=>{ if((page+1)*PAGE < VIEW.length){page++;render();} };
+["fYear","fGroup","fMedal","fStatus"].forEach(id=>$("#"+id).onchange=apply);
+$("#fQ").oninput = ()=>{ clearTimeout(window._t); window._t = setTimeout(apply, 150); };
+
+function show(id){
+  const x = DATA.find(e=>e.id===id);
+  if (!x) return;
+  const t = tier(x.medal);
+  const bullets = [];
+  if (x.title){
+    bullets.push(`<b>Title</b>: ${x.w} word${x.w===1?"":"s"}${x.w?` · ${esc(x.shape)}`:""} · ${x.en?"English only":"contains Chinese"}.`);
+  }
+  if (x.analysed){
+    bullets.push(`<b>Film measured</b>: ${x.dur} s · ${x.shots} shots · average shot ${x.shot_len.toFixed(1)} s · ${esc(x.frame)}.`);
+  } else if (x.film){
+    bullets.push(`<b>Film</b>: hosted in the archive, not yet measured.`);
+  } else {
+    bullets.push(`<b>Film</b>: none hosted — this entry is evidenced by its board.`);
+  }
+  if (x.board) bullets.push(`<b>Board</b>: available (headline + body copy).`);
+  if (x.roles.length) bullets.push(`<b>Credits recorded</b>: ${x.roles.map(r=>esc(r)).join(", ")}.`);
+
+  $("#detail").innerHTML = `
+    <div class="sub">${x.year||""} · ${esc(x.group)}</div>
+    <h2>${esc(x.title||"(untitled)")}</h2>
+    <div class="meta">${t!=='Other'?`<span class="pill ${t==='Kam Fan / Grand'?'kam':''}">${esc(t)}</span> `:""}${esc(x.media||"—")}</div>
+    <dl>
+      <dt>Advertiser</dt><dd>${esc(x.adv||"—")}</dd>
+      <dt>Agency</dt><dd>${esc(x.agency||"—")}</dd>
+      <dt>Category</dt><dd>${esc(x.cat||"—")}</dd>
+      <dt>Archive ID</dt><dd>${esc(x.id)}</dd>
+    </dl>
+    <h3>Analysis</h3>
+    <ul class="an">${bullets.map(b=>`<li>${b}</li>`).join("")}</ul>
+    ${x.board?`<a class="btn ghost" href="${esc(x.board)}" target="_blank" rel="noopener">Open entry board ↗</a>`:""}
+    <h3>Credits</h3>
+    ${x.roles.length?`<div class="chips">${x.roles.map(r=>`<span class="chip">${esc(r)}</span>`).join("")}</div>`:'<div class="empty">No credits recorded on this record.</div>'}
+    ${x.cd?`<dl style="margin-top:10px"><dt>Creative dir.</dt><dd>${esc(x.cd)}</dd>${x.writer?`<dt>Writer</dt><dd>${esc(x.writer)}</dd>`:""}${x.director?`<dt>Director</dt><dd>${esc(x.director)}</dd>`:""}${x.ph?`<dt>Prod. house</dt><dd>${esc(x.ph)}</dd>`:""}</dl>`:""}
+    <div class="note">${x.analysed?"Measured entry — film probed with ffprobe, cuts counted with ffmpeg scene detection.":"Not yet measured — shown for completeness; analysis is being added in batches."}</div>
+  `;
+}
+</script>
+</body>
+</html>
